@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+*.o
+*.a
+*.obj
+*-test-library
+dub.selections.json
+/serve-d
+*.dll
+*.exe
+*.tar.xz
+*.zip
+/version.txt
+/bin/

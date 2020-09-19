@@ -1,0 +1,36 @@
+name: Run Unittests
+on: [push, pull_request]
+
+jobs:
+  dubtest:
+    name: Dub Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        dc: [dmd-latest, ldc-latest]
+        exclude:
+        - os: windows-latest
+          dc: dmd-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install D compiler
+        uses: mihails-strasuns/setup-dlang@v0.3.1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: dub upgrade
+        run: .\ci\upgrade.bat
+        if: matrix.os == 'windows-latest'
+
+      - name: dub upgrade
+        run: ./ci/upgrade.sh
+        if: matrix.os != 'windows-latest'
+
+      - name: Run tests
+        run: dub test
+        env:
+          # shouldn't break other OSes
+          MACOSX_DEPLOYMENT_TARGET: '10.12'

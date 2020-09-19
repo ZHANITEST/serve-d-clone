@@ -1,0 +1,88 @@
+name: Upload prebuild binaries
+on:
+  release:
+    types: [published]
+
+jobs:
+  nightly:
+    name: Deploy releases
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install D compiler
+        uses: mihails-strasuns/setup-dlang@v0.3.1
+        with:
+            compiler: ldc-latest
+
+      - name: dub upgrade
+        run: .\ci\upgrade.bat
+        if: matrix.os == 'windows-latest'
+
+      - name: dub upgrade
+        run: ./ci/upgrade.sh
+        if: matrix.os != 'windows-latest'
+
+      - name: Run tests
+        run: dub test
+
+      # Linux release
+      - name: Build Linux release
+        run: ./ci/build.sh && rdmd ci/validate_version.d
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          ARCH: x86_64
+          BUILD: release
+
+      - name: Deploy Linux release
+        if: matrix.os == 'ubuntu-latest'
+        uses: WebFreak001/upload-asset@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OS: linux-x86_64
+        with:
+          file: ./serve-d.tar.xz
+          mime: application/x-gtar
+          name: serve-d_${TAG}-${OS}.tar.xz
+
+      # OSX release
+      - name: Build OSX release
+        run: ./ci/build.sh && rdmd ci/validate_version.d
+        if: matrix.os == 'macOS-latest'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '10.12'
+          ARCH: x86_64
+          BUILD: release
+
+      - name: Deploy OSX release
+        if: matrix.os == 'macOS-latest'
+        uses: WebFreak001/upload-asset@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OS: osx-x86_64
+        with:
+          file: ./serve-d.tar.xz
+          mime: application/x-gtar
+          name: serve-d_${TAG}-${OS}.tar.xz
+
+      # Windows release
+      - name: Build Windows release
+        run: (.\ci\build.bat) -and (rdmd ci\validate_version.d)
+        if: matrix.os == 'windows-latest'
+        env:
+          BUILD: release
+
+      - name: Deploy Windows release
+        if: matrix.os == 'windows-latest'
+        uses: WebFreak001/upload-asset@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OS: windows
+        with:
+          file: ./serve-d.zip
+          mime: application/zip
+          name: serve-d_${TAG}-${OS}.zip

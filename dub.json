@@ -1,0 +1,45 @@
+{
+	"name": "serve-d",
+	"description": "Microsoft Language Server Protocol implementation using workspace-d",
+	"license": "MIT",
+	"targetType": "executable",
+	"dependencies": {
+		"workspace-d": "3.5.0",
+		"eventsystem": "~>1.2.0",
+		"painlessjson": "1.4.0",
+		"libddoc": "0.7.0",
+		"rm-rf": "~>0.1.0",
+		"diet-complete": "~>0.0.3",
+		"emsi_containers": "0.8.0-alpha.19",
+		"serve-d:http": "*"
+	},
+	"stringImportPaths": [
+		"views"
+	],
+	"subPackages": [
+		"http"
+	],
+	"configurations": [
+		{
+			"name": "executable"
+		},
+		{
+			"name": "unittest",
+			"targetType": "executable",
+			"preBuildCommands-windows": [
+				"$DUB run --compiler=%DC% unit-threaded -c gen_ut_main -- -f bin\\ut.d"
+			],
+			"preBuildCommands-posix": [
+				"$DUB run --compiler=$$DC unit-threaded -c gen_ut_main -- -f bin/ut.d"
+			],
+			"mainSourceFile": "bin/ut.d",
+			"excludedSourceFiles": [
+				"source/app.d",
+				"source/served/info.d"
+			],
+			"dependencies": {
+				"unit-threaded": "*"
+			}
+		}
+	]
+}
